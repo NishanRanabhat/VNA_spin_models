@@ -1,5 +1,5 @@
 {
-    "system_size"              : 20,
+    "system_size"              : 100,
     "input_dim"                : 2,
 	"num_samples"              : 5000,
 	"num_units"                : 30,
@@ -7,8 +7,8 @@
 	"equilibration_time"       : 10,
 	"warmup_time"              : 100,
 	"annealing_time"           : 500,
-    "initial_temperature"      : 1.5,
-    "final_temperature"        : 1.0,
+    "initial_temperature"      : 6.0,
+    "final_temperature"        : 0.0,
     "annealing_on"             : "True",
     "warmup_on"                : "True",
     "rnn_type"                 : "gru",

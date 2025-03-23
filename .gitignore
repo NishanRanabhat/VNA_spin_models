@@ -1,1 +1,7 @@
-/vna_classical_spins/
+/vnaenv/
+/src/output_files/
+/src/__pycache__/
+/src/slurm_outputs/
+/src/figures/
+
+

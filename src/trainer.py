@@ -137,7 +137,7 @@ class VNA_trainer:
 
     return np.concatenate([t.cpu().numpy() for t in gathered_tensor])#convert the gathered outputs into numpy and return the flattend version
 
-  def train(self, total_epochs: int,Temperature_list,gather_interval:int):
+  def train(self, system_size:int, total_epochs: int,Temperature_list,gather_interval:int):
 
     """
     Train the ansatz model for a specified number of epochs.
@@ -154,6 +154,7 @@ class VNA_trainer:
     Returns:
       numpy.ndarray: An array containing the mean local energy collected at each gathering interval.
     """
+      # Ensure the output directory exists
 
     all_Eloc, all_mag, all_varmag, all_log_probs,all_Floc, all_VarFloc = [],[],[],[],[],[]
 
@@ -180,9 +181,13 @@ class VNA_trainer:
         print("Energy=",np.mean(gathered_Floc),np.var(gathered_Floc))
         print("magnetization=",np.mean(gathered_mag),np.var(gathered_mag))
 
-    #if self.gpu_id == 0:
-    #  np.save('all_Floc_Temperature.npy', np.array(all_Floc))
-    #  np.save('all_mag_Temperature.npy',np.array(all_mag))
+    if self.gpu_id == 0:
+      np.save(f'./output_files/VNA_Eloc_temperature={Temperature}_N={system_size}.npy', np.array(all_Eloc))
+      np.save(f'./output_files/VNA_mag_temperature={Temperature}_N={system_size}.npy', np.array(all_mag))
+      np.save(f'./output_files/VNA_varmag_temperature={Temperature}_N={system_size}.npy', np.array(all_varmag))
+      np.save(f'./output_files/VNA_log_probs_temperature={Temperature}_N={system_size}.npy', np.array(all_log_probs))
+      np.save(f'./output_files/VNA_Floc_temperature={Temperature}_N={system_size}.npy', np.array(all_Floc))
+      np.save(f'./output_files/VNA_varFloc_temperature={Temperature}_N={system_size}.npy', np.array(all_VarFloc))
 
     return np.array(all_Floc), np.array(all_mag)
 
@@ -206,7 +211,7 @@ class Brute_Gradient_Descent:
     model: Spin model that provides energy and configuration conversions.
   """
 
-  def __init__(self,ansatz: torch.nn.Module,train_data: DataLoader,optimizer: torch.optim.Optimizer,scheduler,model,gpu_id: int):
+  def __init__(self, ansatz: torch.nn.Module,train_data: DataLoader,optimizer: torch.optim.Optimizer,scheduler,model,gpu_id: int):
     
     self.gpu_id = gpu_id
     self.ansatz = ansatz.to(gpu_id)
@@ -307,7 +312,7 @@ class Brute_Gradient_Descent:
 
     return np.concatenate([t.cpu().numpy() for t in gathered_tensor])#convert the gathered outputs into numpy and return the flattend version
 
-  def train(self, total_epochs: int,Temperature,gather_interval:int):
+  def train(self, system_size: int, total_epochs: int,Temperature,gather_interval:int):
 
     """
     Train the ansatz model for a specified number of epochs.
@@ -324,7 +329,10 @@ class Brute_Gradient_Descent:
     Returns:
       numpy.ndarray: An array containing the mean local energy collected at each gathering interval.
     """
-
+    output_dir = "./output_files"
+    if not os.path.exists(output_dir):
+      os.makedirs(output_dir)
+      
     all_Eloc, all_mag, all_varmag, all_log_probs,all_Floc, all_VarFloc = [],[],[],[],[],[]
 
     for epoch in range(total_epochs):
@@ -351,12 +359,12 @@ class Brute_Gradient_Descent:
         print("magnetization=",np.mean(gathered_mag),np.var(gathered_mag))
 
     if self.gpu_id == 0:
-      np.save(f'Eloc_temperature={Temperature}.npy', np.array(all_Eloc))
-      np.save(f'mag_temperature={Temperature}.npy', np.array(all_mag))
-      np.save(f'varmag_temperature={Temperature}.npy', np.array(all_varmag))
-      np.save(f'log_probs_temperature={Temperature}.npy', np.array(all_log_probs))
-      np.save(f'Floc_temperature={Temperature}.npy', np.array(all_Floc))
-      np.save(f'varFloc_temperature={Temperature}.npy', np.array(all_VarFloc))
+      np.save(f'./output_files/BGD_Eloc_temperature={Temperature}_N={system_size}.npy', np.array(all_Eloc))
+      np.save(f'./output_files/BGD_mag_temperature={Temperature}_N={system_size}.npy', np.array(all_mag))
+      np.save(f'./output_files/BGD_varmag_temperature={Temperature}_N={system_size}.npy', np.array(all_varmag))
+      np.save(f'./output_files/BGD_log_probs_temperature={Temperature}_N={system_size}.npy', np.array(all_log_probs))
+      np.save(f'./output_files/BGD_Floc_temperature={Temperature}_N={system_size}.npy', np.array(all_Floc))
+      np.save(f'./output_files/BGD_varFloc_temperature={Temperature}_N={system_size}.npy', np.array(all_VarFloc))
 
 
     return np.array(all_Floc), np.array(all_mag)

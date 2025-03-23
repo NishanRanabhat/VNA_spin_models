@@ -115,7 +115,7 @@ def run_VNA(rank: int, world_size: int,train_batch_size: int,key:str, num_layers
     #meanE, meanM = trainer.train(stop_time, Temperature_list,gather_interval)
 
     #Brute force training at temperature=Tf
-    trainer = Brute_Gradient_Descent(ansatz,train_data,optimizer,scheduler,model,rank)
-    meanE, meanM = trainer.train(stop_time_brute_force,Tf,gather_interval)
+    trainer = VNA_trainer(ansatz,train_data,optimizer,scheduler,model,rank)
+    meanE, meanM = trainer.train(system_size, stop_time_brute_force,Tf,gather_interval)
 
     cleanup()
