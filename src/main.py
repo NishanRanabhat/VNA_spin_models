@@ -5,7 +5,7 @@ import json
 import sys
 from pathlib import Path
 from vna import run_VNA
-from interaction_matrix import Sherrington_Kirkpatrick_1D, Fully_connected_1D
+from interaction_matrix import Sherrington_Kirkpatrick_1D, Fully_connected_1D, Nearest_neighbor_1D
 import time
 import torch.multiprocessing as mp
 from multiprocessing import Manager
@@ -33,6 +33,7 @@ if __name__ == "__main__":
 
     num_samples = parameters['num_samples']
     num_units = parameters['num_units']
+    weight_sharing = parameters['weight_sharing']
     num_layers = parameters['num_layers']
     equilibrium_time = parameters['equilibration_time']
     warmup_time = parameters['warmup_time']
@@ -41,8 +42,7 @@ if __name__ == "__main__":
     T0 = parameters['initial_temperature']
     parameters['final_temperature'] =Tf
 
-    J_matrix = Fully_connected_1D(system_size)
-
+    J_matrix = Fully_connected_1D(system_size) #Nearest_neighbor_1D(system_size)
     learning_rate = 2e-3
     seed = 12345
     ftype = torch.float32

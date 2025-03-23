@@ -79,7 +79,7 @@ class VNA_trainer:
     cost.backward()
     self.optimizer.step()
 
-    return Eloc.detach().cpu.numpy(),magnetization.detach().cpu().numpy(),log_probs.detach().cpu().numpy(),Floc.detach().cpu().numpy()
+    return Eloc.detach().cpu().numpy(),magnetization.detach().cpu().numpy(),log_probs.detach().cpu().numpy(),Floc.detach().cpu().numpy()
     
   def _run_epoch(self, epoch:int,Temperature):
     
@@ -221,6 +221,17 @@ class Brute_Gradient_Descent:
     self.scheduler = scheduler
     self.model = model
 
+  def count_neg_and_pos(self, x: torch.Tensor) -> torch.Tensor:
+    """
+    Given a tensor x of shape [N, M] containing only -1 and 1,
+    returns a tensor of shape [N, 2], where for each row i:
+      output[i, 0] = number of -1 in row i
+      output[i, 1] = number of  1 in row i
+    """
+    count_neg = (x == -1).sum(dim=1)
+    count_pos = (x == 1).sum(dim=1)
+    return torch.stack([count_neg, count_pos], dim=1)
+
   def _run_batch(self, source,Temperature):
     
     """
@@ -246,6 +257,8 @@ class Brute_Gradient_Descent:
     log_probs = self.ansatz.module.log_probs
     Floc = Eloc + Temperature * log_probs
     cost = torch.mean(log_probs * Floc.detach()) - torch.mean(log_probs) * torch.mean(Floc.detach())
+
+    print(self.count_neg_and_pos(configs)[100:200])
 
     """
     maybe Floc is the cost function
