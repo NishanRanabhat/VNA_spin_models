@@ -10,6 +10,9 @@ import time
 import torch.multiprocessing as mp
 from multiprocessing import Manager
 
+if "MASTER_PORT" not in os.environ:
+    os.environ["MASTER_PORT"] = "12355" 
+
 if __name__ == "__main__":
     
     wd = os.getcwd() 
@@ -47,6 +50,7 @@ if __name__ == "__main__":
     seed = 12345
     ftype = torch.float32
 
+    key = "vanilla"
     world_size = torch.cuda.device_count()
     train_batch_size = int(num_samples)
     sample_batch_size = train_batch_size
@@ -59,9 +63,10 @@ if __name__ == "__main__":
     tic = time.time()
     gather_interval = 1  # parameters['equilibration_time']
 
-    mp.spawn(run_VNA, args=(world_size, train_batch_size, rnn_type, num_layers, system_size, warmup_time, annealing_time, equilibrium_time, num_units,
+    mp.spawn(run_VNA, args=(world_size, train_batch_size, rnn_type, num_layers, system_size, warmup_time, annealing_time, equilibrium_time, num_units, weight_sharing,
                             input_dim, train_size, warmup_on, annealing_on, temp_scheduler, optimizer, scheduler_name, ftype, learning_rate, seed, T0, Tf,
                             J_matrix, gather_interval), nprocs=world_size, join=True)
+    
 
     tac = time.time()
     print("total time = ", tac - tic)

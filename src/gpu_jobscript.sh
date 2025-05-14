@@ -1,11 +1,11 @@
 #!/bin/sh
-#SBATCH --partition=h200q
+#SBATCH --partition=gpuq
 #SBATCH --nodes=1
 #SBATCH --gpus=1
-#SBATCH --mem=128G           # Request 128GB of memory total
-#SBATCH --time=1:00:00
+#SBATCH --mem=32G           
+#SBATCH --time=6:00:00
 #SBATCH --job-name=packets
-#SBATCH --array=0-20          # Array job with 4 tasks (for system_size values 10, 20, 30, 40)
+#SBATCH --array=0-8          # Array job with 4 tasks (for system_size values 10, 20, 30, 40)
 #SBATCH --output=./slurm_outputs/output_%A_%a.txt
 #SBATCH --error=./slurm_outputs/error_%A_%a.txt
 
@@ -15,7 +15,7 @@ source ../vnaenv/bin/activate
 export MASTER_PORT=$((12355 + SLURM_ARRAY_TASK_ID))
 
 # Define the system_size values
-Tf=(0.0 0.075 0.15 0.225 0.3 0.375 0.45 0.525 0.6 0.675 0.75 0.825 0.9 0.975 1.05 1.125 1.2 1.275 1.35 1.425 1.5)
+Tf=(0.0 0.5 0.6 0.7 0.8 1.0 1.5 2.5 3.5)
 
 # Get the system_size for this task
 Tf=${Tf[$SLURM_ARRAY_TASK_ID]}

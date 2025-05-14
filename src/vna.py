@@ -118,9 +118,22 @@ def run_VNA(rank: int, world_size: int,train_batch_size: int,key:str, num_layers
     #meanE, meanM = trainer.train(stop_time, Temperature_list,gather_interval)
 
     #Brute force training at temperature=Tf
-    trainer = VNA_trainer(ansatz,train_data,optimizer,scheduler,model,rank)
+    trainer = Brute_Gradient_Descent(ansatz,train_data,optimizer,scheduler,model,rank)
     meanE, meanM = trainer.train(system_size, stop_time_brute_force,Tf,gather_interval)
-
+    model_type = "Brute_Gradient_Descent"
     #print(ansatz.parameters())
-
+    if rank == 0:
+        save_dir = Path(f"{os.getcwd()}/saved_models")
+        save_dir.mkdir(exist_ok=True)
+        model_path = save_dir / f"vna_model_N{system_size}_weightsharing{weight_sharing}__T{Tf:.2f}_trainer{model_type}_{num_layers}_{num_units}.pt"
+        torch.save({
+            'model_state_dict': ansatz.state_dict(),
+            # 'optimizer_state_dict': optimizer.state_dict(),
+            'system_size': system_size,
+            'temperature': Tf,
+            'num_layers': num_layers,
+            'num_units': num_units,
+            'weight_sharing': weight_sharing,
+            'rnn_type': key,
+        }, model_path)
     cleanup()

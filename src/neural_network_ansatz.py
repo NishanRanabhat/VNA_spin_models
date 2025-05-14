@@ -74,7 +74,10 @@ class binary_disordered_RNNwavefunction(nn.Module):
             for _ in range(self.N):
                 input_size = self.input_dim
                 for _ in range(self.n_layers):
-                    rnn_cells.append(nn.RNNCell(input_size=input_size,hidden_size=self.hidden_dim, nonlinearity=self.activation,dtype=self.type))
+                    rnn_cells.append(nn.RNNCell(input_size=input_size,
+                                                hidden_size=self.hidden_dim, 
+                                                nonlinearity=self.activation,
+                                                dtype=self.type))
                     input_size = self.hidden_dim  # Update for next layer in the stack
             self.rnn = nn.ModuleList(rnn_cells).to(self.device)
             

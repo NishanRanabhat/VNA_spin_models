@@ -46,7 +46,7 @@ class VNA_trainer:
     self.scheduler = scheduler
     self.model = model
 
-  def _run_batch(self, source,Temperature):
+  def _run_batch(self, source, Temperature):
     
     """
     Process a single batch of training data.
@@ -98,17 +98,19 @@ class VNA_trainer:
     """
 
     self.train_data.sampler.set_epoch(epoch)
-    epoch_Eloc,epoch_mag,epoch_log_probs,epoch_Floc = [],[],[],[]
+    epoch_Eloc,epoch_mag,epoch_mag2,epoch_mag4,epoch_log_probs,epoch_Floc = [],[],[],[],[],[]
 
     for batch_idx, source in enumerate(self.train_data):
       source = source.to(self.gpu_id)   
       Eloc,mag,log_probs,Floc = self._run_batch(source,Temperature)
       epoch_Eloc.append(Eloc)
       epoch_mag.append(mag)
+      epoch_mag2.append(mag**2)
+      epoch_mag4.append(mag**4)
       epoch_log_probs.append(log_probs)
       epoch_Floc.append(Floc)
       
-    return np.concatenate(epoch_Eloc),np.concatenate(epoch_mag),np.concatenate(epoch_log_probs),np.concatenate(epoch_Floc)
+    return np.concatenate(epoch_Eloc),np.concatenate(epoch_mag),np.concatenate(epoch_mag2),np.concatenate(epoch_mag4),np.concatenate(epoch_log_probs),np.concatenate(epoch_Floc)
 
   def _gather(self, data):
 
@@ -137,7 +139,7 @@ class VNA_trainer:
 
     return np.concatenate([t.cpu().numpy() for t in gathered_tensor])#convert the gathered outputs into numpy and return the flattend version
 
-  def train(self, system_size:int, total_epochs: int,Temperature_list,gather_interval:int):
+  def train(self, N, total_epochs: int,Temperature_list,gather_interval:int):
 
     """
     Train the ansatz model for a specified number of epochs.
@@ -154,25 +156,30 @@ class VNA_trainer:
     Returns:
       numpy.ndarray: An array containing the mean local energy collected at each gathering interval.
     """
-      # Ensure the output directory exists
 
-    all_Eloc, all_mag, all_varmag, all_log_probs,all_Floc, all_VarFloc = [],[],[],[],[],[]
+    all_Eloc, all_mag, all_varmag, all_mag2, all_varmag2, all_mag4, all_varmag4, all_log_probs,all_Floc, all_VarFloc = [],[],[],[],[],[],[],[],[],[]
 
     for epoch in range(total_epochs):
 
       Temperature = Temperature_list[epoch]
-      Eloc,mag,log_probs,Floc = self._run_epoch(epoch,Temperature)
+      Eloc,mag,mag2,mag4,log_probs,Floc = self._run_epoch(epoch,Temperature)
       self.scheduler.step()
 
       if epoch % gather_interval == 0 or epoch == 0 or epoch == total_epochs-1:
 
         gathered_Eloc = self._gather(Eloc)
         gathered_mag = self._gather(mag)
+        gathered_mag2 = self._gather(mag2)
+        gathered_mag4 = self._gather(mag4)
         gathered_log_probs = self._gather(log_probs)
         gathered_Floc = self._gather(Floc)
         all_Eloc.append(np.mean(gathered_Eloc))
         all_mag.append(np.mean(gathered_mag))
         all_varmag.append(np.var(gathered_mag))
+        all_mag2.append(np.mean(gathered_mag2))
+        all_varmag2.append(np.var(gathered_mag2))
+        all_mag4.append(np.mean(gathered_mag4))
+        all_varmag4.append(np.var(gathered_mag4))
         all_log_probs.append(np.mean(gathered_log_probs))
         all_Floc.append(np.mean(gathered_Floc))
         all_VarFloc.append(np.var(gathered_Floc))
@@ -182,12 +189,8 @@ class VNA_trainer:
         print("magnetization=",np.mean(gathered_mag),np.var(gathered_mag))
 
     if self.gpu_id == 0:
-      np.save(f'./output_files/VNA_Eloc_temperature={Temperature}_N={system_size}.npy', np.array(all_Eloc))
-      np.save(f'./output_files/VNA_mag_temperature={Temperature}_N={system_size}.npy', np.array(all_mag))
-      np.save(f'./output_files/VNA_varmag_temperature={Temperature}_N={system_size}.npy', np.array(all_varmag))
-      np.save(f'./output_files/VNA_log_probs_temperature={Temperature}_N={system_size}.npy', np.array(all_log_probs))
-      np.save(f'./output_files/VNA_Floc_temperature={Temperature}_N={system_size}.npy', np.array(all_Floc))
-      np.save(f'./output_files/VNA_varFloc_temperature={Temperature}_N={system_size}.npy', np.array(all_VarFloc))
+      np.save(f'./output_files/layer3_Nh64/all_Floc_Temperature={Temperature}_N={N}.npy', np.array(all_Floc))
+      np.save(f'./output_files/layer3_Nh64/all_mag_Temperature={Temperature}_N={N}.npy',np.array(all_mag))
 
     return np.array(all_Floc), np.array(all_mag)
 
@@ -211,7 +214,7 @@ class Brute_Gradient_Descent:
     model: Spin model that provides energy and configuration conversions.
   """
 
-  def __init__(self, ansatz: torch.nn.Module,train_data: DataLoader,optimizer: torch.optim.Optimizer,scheduler,model,gpu_id: int):
+  def __init__(self,ansatz: torch.nn.Module,train_data: DataLoader,optimizer: torch.optim.Optimizer,scheduler,model,gpu_id: int):
     
     self.gpu_id = gpu_id
     self.ansatz = ansatz.to(gpu_id)
@@ -232,7 +235,7 @@ class Brute_Gradient_Descent:
     count_pos = (x == 1).sum(dim=1)
     return torch.stack([count_neg, count_pos], dim=1)
 
-  def _run_batch(self, source,Temperature):
+  def _run_batch(self, source, Temperature):
     
     """
     Process a single batch of training data.
@@ -286,17 +289,19 @@ class Brute_Gradient_Descent:
     """
 
     self.train_data.sampler.set_epoch(epoch)
-    epoch_Eloc,epoch_mag,epoch_log_probs,epoch_Floc = [],[],[],[]
+    epoch_Eloc,epoch_mag,epoch_mag2,epoch_mag4,epoch_log_probs,epoch_Floc = [],[],[],[],[],[]
 
     for batch_idx, source in enumerate(self.train_data):
       source = source.to(self.gpu_id)   
       Eloc,mag,log_probs,Floc = self._run_batch(source,Temperature)
       epoch_Eloc.append(Eloc)
       epoch_mag.append(mag)
+      epoch_mag2.append(mag**2)
+      epoch_mag4.append(mag**4)
       epoch_log_probs.append(log_probs)
-      epoch_Floc.append(Floc)
+      epoch_Floc.append(Floc)      
       
-    return np.concatenate(epoch_Eloc),np.concatenate(epoch_mag),np.concatenate(epoch_log_probs),np.concatenate(epoch_Floc)
+    return np.concatenate(epoch_Eloc),np.concatenate(epoch_mag),np.concatenate(epoch_mag2),np.concatenate(epoch_mag4),np.concatenate(epoch_log_probs),np.concatenate(epoch_Floc)
 
   def _gather(self, data):
 
@@ -325,7 +330,7 @@ class Brute_Gradient_Descent:
 
     return np.concatenate([t.cpu().numpy() for t in gathered_tensor])#convert the gathered outputs into numpy and return the flattend version
 
-  def train(self, system_size: int, total_epochs: int,Temperature,gather_interval:int):
+  def train(self, N, total_epochs: int,Temperature,gather_interval:int):
 
     """
     Train the ansatz model for a specified number of epochs.
@@ -342,26 +347,29 @@ class Brute_Gradient_Descent:
     Returns:
       numpy.ndarray: An array containing the mean local energy collected at each gathering interval.
     """
-    output_dir = "./output_files"
-    if not os.path.exists(output_dir):
-      os.makedirs(output_dir)
-      
-    all_Eloc, all_mag, all_varmag, all_log_probs,all_Floc, all_VarFloc = [],[],[],[],[],[]
+
+    all_Eloc, all_mag, all_varmag, all_mag2, all_varmag2, all_mag4, all_varmag4, all_log_probs,all_Floc, all_VarFloc = [],[],[],[],[],[],[],[],[],[]
 
     for epoch in range(total_epochs):
 
-      Eloc,mag,log_probs,Floc = self._run_epoch(epoch,Temperature)
+      Eloc,mag,mag2,mag4,log_probs,Floc = self._run_epoch(epoch,Temperature)
       self.scheduler.step()
 
       if epoch % gather_interval == 0 or epoch == 0 or epoch == total_epochs-1:
 
         gathered_Eloc = self._gather(Eloc)
         gathered_mag = self._gather(mag)
+        gathered_mag2 = self._gather(mag2)
+        gathered_mag4 = self._gather(mag4)
         gathered_log_probs = self._gather(log_probs)
         gathered_Floc = self._gather(Floc)
         all_Eloc.append(np.mean(gathered_Eloc))
         all_mag.append(np.mean(gathered_mag))
         all_varmag.append(np.var(gathered_mag))
+        all_mag2.append(np.mean(gathered_mag2))
+        all_varmag2.append(np.var(gathered_mag2))
+        all_mag4.append(np.mean(gathered_mag4))
+        all_varmag4.append(np.var(gathered_mag4))
         all_log_probs.append(np.mean(gathered_log_probs))
         all_Floc.append(np.mean(gathered_Floc))
         all_VarFloc.append(np.var(gathered_Floc))
@@ -372,12 +380,12 @@ class Brute_Gradient_Descent:
         print("magnetization=",np.mean(gathered_mag),np.var(gathered_mag))
 
     if self.gpu_id == 0:
-      np.save(f'./output_files/BGD_Eloc_temperature={Temperature}_N={system_size}.npy', np.array(all_Eloc))
-      np.save(f'./output_files/BGD_mag_temperature={Temperature}_N={system_size}.npy', np.array(all_mag))
-      np.save(f'./output_files/BGD_varmag_temperature={Temperature}_N={system_size}.npy', np.array(all_varmag))
-      np.save(f'./output_files/BGD_log_probs_temperature={Temperature}_N={system_size}.npy', np.array(all_log_probs))
-      np.save(f'./output_files/BGD_Floc_temperature={Temperature}_N={system_size}.npy', np.array(all_Floc))
-      np.save(f'./output_files/BGD_varFloc_temperature={Temperature}_N={system_size}.npy', np.array(all_VarFloc))
+      np.save(f'./output_files/layer4_Nh256_False/Eloc_temperature={Temperature}_N={N}.npy', np.array(all_Eloc))
+      np.save(f'./output_files/layer4_Nh256_False/mag_temperature={Temperature}_N={N}.npy', np.array(all_mag))
+      np.save(f'./output_files/layer4_Nh256_False/varmag_temperature={Temperature}_N={N}.npy', np.array(all_varmag))
+      np.save(f'./output_files/layer4_Nh256_False/log_probs_temperature={Temperature}_N={N}.npy', np.array(all_log_probs))
+      np.save(f'./output_files/layer4_Nh256_False/Floc_temperature={Temperature}_N={N}.npy', np.array(all_Floc))
+      np.save(f'./output_files/layer4_Nh256_False/varFloc_temperature={Temperature}_N={N}.npy', np.array(all_VarFloc))
 
 
     return np.array(all_Floc), np.array(all_mag)

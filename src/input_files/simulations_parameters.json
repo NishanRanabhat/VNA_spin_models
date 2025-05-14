@@ -1,19 +1,20 @@
 {
-    "system_size"              : 100,
-    "input_dim"                : 2,
+    "system_size"              : 256,
+    "input_dim"                : 1,
 	"num_samples"              : 5000,
-	"num_units"                : 30,
-	"num_layers"               : 2,
+	"num_units"                : 128,
+	"num_layers"               : 1,
 	"equilibration_time"       : 10,
 	"warmup_time"              : 100,
 	"annealing_time"           : 500,
-    "initial_temperature"      : 6.0,
+    "initial_temperature"      : 5.0,
     "final_temperature"        : 0.0,
     "annealing_on"             : "True",
     "warmup_on"                : "True",
     "rnn_type"                 : "gru",
     "optimizer"                : "adam",
     "temperature_scheduler"    : "exponential",
-    "lr_scheduler"             : "Exponential"
+    "lr_scheduler"             : "Exponential",
+    "weight_sharing"           : "False"
 }
     
