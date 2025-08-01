@@ -1,7 +1,16 @@
-/vnaenv/
+/vna/
 /src/output_files/
 /src/__pycache__/
-/src/slurm_outputs/
-/src/figures/
-
+/src/adiabaticity.py
+/src/compare_models.py
+/src/finite_size.py
+/sampled_spins/
+/saved_models/
+/saved_models_July/
+/slurm_outputs/
+/figures/
+/output_files/
+/src/playground.py
+/src/plot_stuffs.py
+/src/post_processing.py
 
