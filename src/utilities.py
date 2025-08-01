@@ -1,4 +1,4 @@
-import torc
+import torch
 import numpy as np
 import random
 from neural_network_ansatz import binary_disordered_RNNwavefunction, binary_disordered_RNNwavefunction_weight_sharing
