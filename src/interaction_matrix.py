@@ -97,7 +97,3 @@ def Nearest_neighbor_1D(system_size: int):
     """
     # np.diag takes a 1D array and puts it on the specified diagonal (k=1 is the superdiagonal).
     return np.diag(np.ones(system_size - 1), k=1)
-
-
-
-

@@ -2,23 +2,23 @@
 #SBATCH --partition=h200q
 #SBATCH --nodes=1
 #SBATCH --gpus=1
-#SBATCH --mem=128G           # Request 128GB of memory total
-#SBATCH --time=1:00:00
+#SBATCH --mem=64G           # Request 128GB of memory total
+#SBATCH --time=8:00:00
 #SBATCH --job-name=packets
-#SBATCH --array=0-20          # Array job with 4 tasks (for system_size values 10, 20, 30, 40)
-#SBATCH --output=./slurm_outputs/output_%A_%a.txt
-#SBATCH --error=./slurm_outputs/error_%A_%a.txt
+#SBATCH --array=0-3         # Array job with 4 tasks (for system_size values 10, 20, 30, 40)
+#SBATCH --output=../slurm_outputs/output_%A_%a.txt
+#SBATCH --error=../slurm_outputs/error_%A_%a.txt
 
 module load slurm
 module load python/3.8
-source ../vnaenv/bin/activate
-export MASTER_PORT=$((12355 + SLURM_ARRAY_TASK_ID))
+source ../vna/bin/activate
+export MASTER_PORT=$((29500 + 100 + $SLURM_ARRAY_TASK_ID * 100))
 
 # Define the system_size values
-Tf=(0.0 0.075 0.15 0.225 0.3 0.375 0.45 0.525 0.6 0.675 0.75 0.825 0.9 0.975 1.05 1.125 1.2 1.275 1.35 1.425 1.5)
+system_size=(1024 256 64 16)
 
 # Get the system_size for this task
-Tf=${Tf[$SLURM_ARRAY_TASK_ID]}
+system_size=${system_size[$SLURM_ARRAY_TASK_ID]}
 
 # Run the Python script with the system_size argument
-python main.py $Tf
+python main.py $system_size
