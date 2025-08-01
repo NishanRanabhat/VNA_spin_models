@@ -13,25 +13,26 @@ class binary_disordered_RNNwavefunction(nn.Module):
     The model utilizes recurrent neural network (RNN) cells (either vanilla RNN
     or GRU) arranged per site, with a dedicated dense network mapping the RNN's
     hidden state to a probability distribution over binary outputs. The network
-    sequentially processes each site (spin) and samples an output according to the
-    learned probabilities, thereby generating a configuration and computing its
-    log-probability.
+    sequentially processes each site (spin) and samples an output according to 
+    the learned probabilities, thereby generating a configuration and computing
+    its log-probability.
 
     Attributes:
-        hidden_dim (int): Number of units in the hidden layer for each RNN cell.
-        input_dim (int): Dimensionality of the input, e.g., 2 for binary (0/1) inputs.
-        n_layers (int): Number of stacked RNN layers per site.
-        N (int): Total number of sites (spins) in the system.
-        activation (str): Activation function used in vanilla RNN cells (e.g., "relu").
-        key (str): Type of RNN cell to use; options are "vanilla" or "gru".
-        type (torch.dtype): Data type for the model's parameters.
-        device (str): Device on which the model will be run (e.g., 'cpu' or 'cuda').
-        permuted (np.ndarray): Array of site indices; by default, sites are ordered sequentially.
-        rnn (nn.ModuleList): List of RNN or GRU cells, arranged per site.
-        dense (nn.ModuleList): List of dense networks (one per site) that map the hidden state
-                               to output probabilities.
-        samples (torch.Tensor): Tensor to store the sampled output configuration.
-        log_probs (torch.Tensor): Tensor storing the log-probability of the generated sequence.
+       hidden_dim (int): Number of units in the hidden layer for each RNN cell.
+       input_dim (int): Dimensionality of the input, 
+                        e.g., 2 for binary (0/1) inputs.
+       n_layers (int): Number of stacked RNN layers per site.
+       N (int): Total number of sites (spins) in the system.
+       activation (str): Activation function used in vanilla RNN cells (e.g., "relu").
+       key (str): Type of RNN cell to use; options are "vanilla" or "gru".
+       type (torch.dtype): Data type for the model's parameters.
+       device (str): Device on which the model will be run (e.g., 'cpu' or 'cuda').
+       permuted (np.ndarray): Array of site indices; by default, sites are ordered sequentially.
+       rnn (nn.ModuleList): List of RNN or GRU cells, arranged per site.
+       dense (nn.ModuleList): List of dense networks (one per site) that map the hidden state
+                              to output probabilities.
+       samples (torch.Tensor): Tensor to store the sampled output configuration.
+       log_probs (torch.Tensor): Tensor storing the log-probability of the generated sequence.
 
     Parameters:
         key (str): Specifies the type of RNN cell to use ("vanilla" for nn.RNNCell,
@@ -171,7 +172,8 @@ class binary_disordered_RNNwavefunction(nn.Module):
         one_hot_samples = torch.nn.functional.one_hot(self.samples, num_classes=self.input_dim).type(self.type)
         self.log_probs = torch.sum(torch.log(torch.sum(torch.multiply(probs, one_hot_samples), dim=2) + 1e-10),dim=1)
 
-        return probs
+        #return probs
+        return self.samples, self.log_probs
 
 class binary_disordered_RNNwavefunction_weight_sharing(nn.Module):
     """
@@ -284,4 +286,5 @@ class binary_disordered_RNNwavefunction_weight_sharing(nn.Module):
         self.samples = samples
         self.log_probs = log_probs
 
-        return probs
+        #return probs
+        return self.samples, self.log_probs
