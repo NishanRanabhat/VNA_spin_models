@@ -1,4 +1,4 @@
-import torch
+import torc
 import numpy as np
 import random
 from neural_network_ansatz import binary_disordered_RNNwavefunction, binary_disordered_RNNwavefunction_weight_sharing
@@ -127,6 +127,7 @@ def model_ansatz(key:str,system_size:int,input_dim:int, num_layers:int,ftype:tor
 
   return ansatz
 
+
 def model_class(system_size,J_matrix,device,ftype):
 
   """
@@ -145,6 +146,7 @@ def model_class(system_size,J_matrix,device,ftype):
   model = One_dimensional_spin_model(system_size,J_matrix,device,ftype)
 
   return model
+
 
 def optimizer_init(ansatz,learningrate = 1e-3,optimizer_type="adam"):
 
@@ -168,6 +170,7 @@ def optimizer_init(ansatz,learningrate = 1e-3,optimizer_type="adam"):
     optimizer = torch.optim.SGD(ansatz.parameters(), lr= learningrate)
 
   return optimizer
+
 
 def scheduler_init(optimizer, num_steps:int, scheduler_name="None"):
 
@@ -203,6 +206,7 @@ def scheduler_init(optimizer, num_steps:int, scheduler_name="None"):
 
   return scheduler
 
+
 def seed_everything(seed, rank):
 
   """
@@ -226,7 +230,7 @@ def seed_everything(seed, rank):
   torch.backends.cudnn.deterministic = True
   torch.backends.cudnn.benchmark = False
 
-#def input_data(num_samples:int,input_size:int,ftype:torch.dtype):
+  #def input_data(num_samples:int,input_size:int,ftype:torch.dtype):
 
   """
   Create dummy input data for testing or initialization.
@@ -243,10 +247,11 @@ def seed_everything(seed, rank):
     torch.Tensor: The dummy input tensor.
   """
 
-#  dummy_input = torch.zeros(num_samples,input_size, dtype=ftype)
-#  dummy_input[:,0] = torch.ones(num_samples, dtype=ftype)
+  #  dummy_input = torch.zeros(num_samples,input_size, dtype=ftype)
+  #  dummy_input[:,0] = torch.ones(num_samples, dtype=ftype)
 
-#  return dummy_input
+  #  return dummy_input
+
 
 def input_data(num_samples: int, input_size: int, ftype: torch.dtype):
     """
@@ -268,6 +273,7 @@ def input_data(num_samples: int, input_size: int, ftype: torch.dtype):
     # Randomly choose for each sample whether the first column is 1 (up) or 0 (down)
     dummy_input[:, 0] = torch.randint(0, 2, (num_samples,), dtype=torch.int64).to(ftype)
     return dummy_input
+
 
 def prepare_dataloader(dataset, world_size: int, rank, batch_size: int):
 
@@ -296,3 +302,123 @@ def prepare_dataloader(dataset, world_size: int, rank, batch_size: int):
     sampler=DistributedSampler(dataset, num_replicas=world_size, rank=rank),
     num_workers=4,
     persistent_workers=True)
+
+
+def Y_rescaled(y,L,a):
+    """
+    Rescales an observable (y) using a finite-size scaling factor.
+
+    This function applies a scaling transformation to the input value `y` 
+    by multiplying it with the system size `L` raised to the power `a`.
+
+    Parameters
+    ----------
+    y : float or array-like
+        The observable value(s) to be rescaled.
+    L : float or int
+        The characteristic system size.
+    a : float
+        The scaling exponent for the observable.
+
+    Returns
+    -------
+    float or numpy.ndarray
+        The rescaled observable, computed as y * L**a.
+
+    Examples
+    --------
+    >>> YL(2.0, 16, 0.125)
+    2.0 * 16**0.125
+    """
+    return y * L**a
+
+
+def X_rescaled(x, L, xc, b):
+    """
+    Rescales a control variable (x) relative to a critical value (xc) using a finite-size scaling factor.
+
+    This function transforms the input value `x` by first subtracting 
+    a critical value `xc` and then multiplying the result by `L` raised to the power `b`.
+
+    Parameters
+    ----------
+    x : float or array-like
+        The original value(s) of the control parameter.
+    L : float or int
+        The system size used for scaling.
+    xc : float
+        The critical value of the control parameter.
+    b : float
+        The scaling exponent for the control parameter.
+
+    Returns
+    -------
+    float or numpy.ndarray
+        The rescaled control parameter, computed as (x - xc) * L**b.
+
+    Examples
+    --------
+    >>> XL(2.5, 16, 2.3, 1.0)
+    (2.5 - 2.3) * 16**1.0
+    """
+    return (x - xc) * L**b
+
+
+def slice_limits(data_list, lower_lim, upper_lim):
+    """
+    Filters an array, returning only the values that fall between two limits.
+
+    This function iterates over the provided list (or array) and selects the elements
+    that are strictly greater than `lower_lim` and strictly less than `upper_lim`.
+
+    Parameters
+    ----------
+    data_list : array-like
+        A list or array of numeric values to be filtered.
+    lower_lim : float
+        The lower limit (exclusive).
+    upper_lim : float
+        The upper limit (exclusive).
+
+    Returns
+    -------
+    numpy.ndarray
+        A NumPy array containing the elements from data_list that satisfy:
+        lower_lim < element < upper_lim.
+
+    Examples
+    --------
+    >>> slice_limits([0.1, 0.5, 1.0, 1.5, 2.0], 0.5, 1.5)
+    array([1.0])
+    """
+    return np.asarray([x for x in data_list if lower_lim < x < upper_lim])
+
+
+def closest_index(data_list, input_val):
+    """
+    Finds the index of the element in a monotonic array that is closest to a given value.
+
+    The function assumes that `data_list` is a monotonic (increasing or decreasing) array.
+    It computes the absolute difference between each element and the given `input_val` 
+    and returns the index of the element with the minimum difference.
+
+    Parameters
+    ----------
+    data_list : array-like
+        A monotonic array (e.g., NumPy array or list) of numeric values.
+    input_val : float
+        The value for which the closest index in data_list is sought.
+
+    Returns
+    -------
+    int
+        The index of the element in data_list that is closest to input_val.
+
+    Examples
+    --------
+    >>> data = np.array([0, 1, 2, 3, 4, 5])
+    >>> closest_index(data, 2.7)
+    3  # Since 3 is the closest to 2.7.
+    """
+    
+    return np.where(np.abs(data_list-input_val)== min(np.abs(data_list-input_val)))[0][0]
