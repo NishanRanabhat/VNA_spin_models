@@ -24,8 +24,8 @@ if __name__ == "__main__":
     # Get system_size from command-line arguments
     Tf = parameters['final_temperature']
     # Tf = float(sys.argv[1])
-    system_size = int(sys.argv[1])
-    # system_size = parameters['system_size']
+    # system_size = int(sys.argv[1])
+    system_size = parameters['system_size']
     input_dim = parameters['input_dim']
     eq_trainer = parameters["eq_trainer"]
     annealing_on = parameters['annealing_on']
@@ -44,8 +44,8 @@ if __name__ == "__main__":
     equilibrium_time = parameters['equilibration_time']
     warmup_time = parameters['warmup_time']
     
-    # annealing_time = int(sys.argv[1])
-    annealing_time = parameters['annealing_time']
+    annealing_time = int(sys.argv[1])
+    # annealing_time = parameters['annealing_time']
 
     T0 = parameters['initial_temperature']
     # parameters['final_temperature'] =Tf

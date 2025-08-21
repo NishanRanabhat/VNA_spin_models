@@ -9,7 +9,8 @@
 /saved_models_July/
 /slurm_outputs/
 /figures/
-/output_files/
+/Dynamical_FSS/equilibrium_fss.py
+/Dynamical_FSS/runequilibrium_fss.py
 /src/playground.py
 /src/plot_stuffs.py
 /src/post_processing.py
