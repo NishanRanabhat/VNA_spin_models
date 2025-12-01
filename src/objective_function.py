@@ -79,4 +79,5 @@ class One_dimensional_spin_model:
       Returns:
         - magnetization (scalar).
       """
-    return configs.sum(dim=1)/self.N
+    return torch.sqrt((configs.sum(dim=1)/self.N)**2)
+  
