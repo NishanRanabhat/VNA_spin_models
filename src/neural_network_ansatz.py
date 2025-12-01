@@ -272,7 +272,8 @@ class binary_disordered_RNNwavefunction_weight_sharing(nn.Module):
             probs[:, site, :] = logits + 1e-10  # avoid numerical issues
             
             # Sample from the probability distribution.
-            sample = torch.multinomial(logits + 1e-10, num_samples=1).view(-1)
+            # print(logits, flush=True)
+            sample = torch.multinomial((logits + 1e-10), num_samples=1).view(-1)
             samples[:, site] = sample
             
             # Prepare the one-hot encoded sample as input for the next site.
@@ -288,3 +289,55 @@ class binary_disordered_RNNwavefunction_weight_sharing(nn.Module):
 
         #return probs
         return self.samples, self.log_probs
+    
+    def log_probability(self, samples):
+        """
+            calculate the log-probabilities of ```samples``
+            ------------------------------------------------------------------------
+            Parameters:
+
+            samples:         torch.Tensor
+                             a torch.placeholder of shape (number of samples,system-size)
+                             containing the input samples in integer encoding
+            inputdim:        int
+                             dimension of the input space
+
+            ------------------------------------------------------------------------
+            Returns:
+            log-probs        torch.Tensor of shape (number of samples,)
+                             the log-probability of each sample
+            """
+        batch_size = samples.shape[0]
+        inputs = torch.zeros(batch_size, self.input_dim, dtype=self.type, device=self.device) #inputs.to(self.device)
+        inputs[:,0] = torch.ones(batch_size, dtype=self.type, device=self.device)
+        inputs = inputs.to(self.device)
+
+        probs=[]
+        hiddens = []  # Store hidden states at each layer
+
+        rnn_state = torch.zeros(batch_size, self.hidden_dim, dtype=self.type).to(self.device) 
+        rnn_state_zero = torch.zeros(batch_size, self.hidden_dim, dtype=self.type).to(self.device) 
+
+        for site in range(self.N):
+            
+            if site ==0:
+                for layer in range(self.n_layers):
+                    rnn_state = self.rnn_layers[layer](inputs, rnn_state_zero)
+                    inputs = rnn_state
+                    hiddens.append(rnn_state)
+            else:
+                for layer in range(self.n_layers):
+                    rnn_state = hiddens[layer]
+                    rnn_state = self.rnn_layers[layer](inputs, rnn_state)
+                    inputs = rnn_state
+                    hiddens[layer] = rnn_state
+
+            logits=self.dense_network(rnn_state)
+            probs.append(logits)
+            inputs= torch.nn.functional.one_hot(samples[:,site].to(torch.long), num_classes=self.input_dim).type(self.type).to(self.device)
+
+        probs = torch.stack(probs, axis=1)
+
+        one_hot_samples = torch.nn.functional.one_hot(samples.to(torch.long), num_classes=self.input_dim).type(self.type).to(self.device)
+        self.log_probs = torch.sum(torch.log(torch.sum(torch.multiply(probs, one_hot_samples), dim=2)+1e-10), dim=1)
+        return self.log_probs
