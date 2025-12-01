@@ -184,3 +184,11 @@ cost = ⟨log(p) × F_loc⟩ - ⟨log(p)⟩ × ⟨F_loc⟩
 - **New interaction matrix:** Add function in `interaction_matrix.py`, return upper-triangular NumPy array
 - **New observable:** Add method to `One_dimensional_spin_model` in `objective_function.py`
 - **New RNN architecture:** Add class in `neural_network_ansatz.py`, ensure it has `.samples` and `.log_probs` attributes after forward pass
+
+---
+
+## Dynamical Finite-Size Scaling
+
+This project also includes an independent module for **dynamical finite-size scaling analysis** in `Dynamical_FSS/`. Use it to extract critical exponents from VNA results at multiple system sizes.
+
+See [`Dynamical_FSS/README.md`](Dynamical_FSS/README.md) for usage instructions.
