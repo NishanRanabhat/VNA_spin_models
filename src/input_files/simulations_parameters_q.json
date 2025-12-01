@@ -1,0 +1,22 @@
+{
+    "system_size"              : 32,
+    "input_dim"                : 2,
+	"num_samples"              : 512,
+	"num_units"                : 16,
+    "learning_rate"            : 0.002,
+	"num_layers"               : 1,
+	"equilibration_time"       : 1,
+	"warmup_time"              : 1000,
+	"annealing_time"           : 20000,
+    "initial_temperature"      : 2.0,
+    "final_temperature"        : 1.0,
+    "eq_trainer"               : "VNA_trainer",     
+    "annealing_on"             : "True",
+    "warmup_on"                : "True",
+    "rnn_type"                 : "gru",
+    "optimizer"                : "adam",
+    "temperature_scheduler"    : "linear",
+    "lr_scheduler"             : "Exponential",
+    "weight_sharing"           : "True",
+    "interaction"              : "fully_connected"
+}
