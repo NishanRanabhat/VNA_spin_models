@@ -16,15 +16,13 @@ if "MASTER_PORT" not in os.environ:
 if __name__ == "__main__":
     
     wd = os.getcwd() 
-    parameters_filename = Path(wd + "/input_files/simulations_parameters.json")
-    #parameters_filename = Path(wd + "/input_files/simulations_parameters.json")
+    parameters_filename = Path(wd + "/input_files/simulations_parameters_q.json")
+    # parameters_filename = Path(wd + "/input_files/simulations_parameters.json")
     with open(parameters_filename, 'r') as openfile:
         parameters = json.load(openfile)
     
     # Get system_size from command-line arguments
     Tf = parameters['final_temperature']
-    # Tf = float(sys.argv[1])
-    # system_size = int(sys.argv[1])
     system_size = parameters['system_size']
     input_dim = parameters['input_dim']
     eq_trainer = parameters["eq_trainer"]
@@ -34,25 +32,32 @@ if __name__ == "__main__":
     temp_scheduler = parameters['temperature_scheduler']
     optimizer = parameters['optimizer']
     scheduler_name = parameters['lr_scheduler']
-
     num_samples = parameters['num_samples']
     num_units = parameters['num_units']
-    # num_units = int(sys.argv[1])
+    learning_rate = parameters['learning_rate']
     weight_sharing = parameters['weight_sharing']
     num_layers = parameters['num_layers']
-    # num_layers = int(sys.argv[1])
     equilibrium_time = parameters['equilibration_time']
     warmup_time = parameters['warmup_time']
+    interaction = parameters['interaction']
     
     annealing_time = int(sys.argv[1])
     # annealing_time = parameters['annealing_time']
 
     T0 = parameters['initial_temperature']
     # parameters['final_temperature'] =Tf
-
-    J_matrix = Fully_connected_1D(system_size) #Nearest_neighbor_1D(system_size)
-    learning_rate = 2e-3
-    seed = 12345
+    
+    if parameters['interaction'] == "nearest_neighbor":
+        J_matrix = Nearest_neighbor_1D(system_size)
+    elif parameters['interaction'] == "fully_connected":
+        J_matrix = Fully_connected_1D(system_size)
+    elif parameters['interaction'] == "sherrington_kirkpatrick":
+        J_matrix = Sherrington_Kirkpatrick_1D(system_size)
+    else:
+        raise ValueError("Invalid interaction type specified in parameters.")
+    print("Interaction matrix J:", parameters['interaction'])
+    
+    seed = 278305
     ftype = torch.float32
 
     key = parameters['rnn_type']
@@ -69,7 +74,7 @@ if __name__ == "__main__":
     gather_interval = 1  # parameters['equilibration_time']
 
     mp.spawn(run_VNA, args=(world_size, eq_trainer, train_batch_size, rnn_type, num_layers, system_size, warmup_time, annealing_time, equilibrium_time, num_units, weight_sharing,
-                            input_dim, train_size, warmup_on, annealing_on, temp_scheduler, optimizer, scheduler_name, ftype, learning_rate, seed, T0, Tf,
+                            input_dim, train_size, warmup_on, annealing_on, temp_scheduler, optimizer, scheduler_name, interaction, ftype, learning_rate, seed, T0, Tf,
                             J_matrix, gather_interval), nprocs=world_size, join=True)
     
 
