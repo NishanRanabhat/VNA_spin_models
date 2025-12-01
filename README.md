@@ -191,4 +191,4 @@ cost = ⟨log(p) × F_loc⟩ - ⟨log(p)⟩ × ⟨F_loc⟩
 
 This project also includes an independent module for **dynamical finite-size scaling analysis** in `Dynamical_FSS/`. Use it to extract critical exponents from VNA results at multiple system sizes.
 
-See [`Dynamical_FSS/README.md`](Dynamical_FSS/README.md) for usage instructions.
+See [`Dynamical_FSS/Dynamical_FSS_README.md`](Dynamical_FSS/Dynamical_FSS_README.md) for usage instructions.
